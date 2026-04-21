@@ -37,6 +37,38 @@
 
   .app { max-width: 1280px; margin: 0 auto; padding: 24px 28px 80px; }
 
+  /* Container to hold the text and the brackets */
+.header-bracket-container {
+  position: relative;
+  padding: 10px 40px; /* Space for the brackets */
+  display: inline-block;
+}
+
+/* Common bracket styles */
+.header-bracket-container::before,
+.header-bracket-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px; /* Depth of the bracket */
+  border: 2px solid var(--border); /* Using your existing variable */
+}
+
+/* Left Bracket [ */
+.header-bracket-container::before {
+  left: 0;
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Right Bracket ] */
+.header-bracket-container::after {
+  right: 0;
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+}
+
   header.top {
     display: flex; align-items: flex-end; justify-content: space-between;
     padding-bottom: 20px; border-bottom: 1px solid var(--border-soft);
@@ -329,14 +361,15 @@
 <div class="app">
 
   <header class="top">
-    <div>
+  <div class="header-bracket-container"> <div>
       <h1>XPL Customer <em>Inspector</em></h1>
       <div class="sub">Customer Support · Single-user diagnostic</div>
     </div>
-    <div class="meta" id="metaInfo">
-      <span class="ok">●</span> Ready · Awaiting upload
-    </div>
-  </header>
+  </div>
+  <div class="meta" id="metaInfo">
+    <span class="ok">●</span> Ready · Awaiting upload
+  </div>
+</header>
 
   <div id="uploadScreen">
     <label class="upload-zone" id="dropZone" for="fileInput">
