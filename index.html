@@ -58,47 +58,57 @@
   header.top .meta .ok { color: var(--ok); }
 
   /* Upload */
-  .upload-zone {
-    position: relative;
-    border: 1.5px dashed var(--border); border-radius: 10px;
-    padding: 48px 32px; text-align: center; transition: 0.2s;
-    cursor: pointer; background: var(--bg-2);
-    overflow: visible;
-  }
-  .upload-zone:hover, .upload-zone.drag {
-    border-color: var(--accent); background: #15181e;
-  }
-  /* This creates the shared look for both brackets */
-  .upload-zone::before,
-  .upload-zone::after {
-    content: '';
-    position: absolute;
-    top: 30px;    /* Distance from top */
-    bottom: 30px; /* Distance from bottom */
-    width: 25px;  /* How "deep" the bracket goes */
-    border: 2px solid var(--border);
-    pointer-events: none; /* Important: clicks still go to the upload area */
-    transition: 0.2s;
-  }
+ /* Center the contents and make sure the span behaves */
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  padding: 48px 32px;
+  cursor: pointer;
+  background: var(--bg-2);
+  transition: 0.2s;
+}
 
-  /* Left Bracket [ */
-  .upload-zone::before {
-    left: 15px;
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-  }
+.bracket-frame {
+  position: relative;
+  padding: 10px 40px; /* Space on sides for brackets */
+  display: inline-block;
+}
 
-  /* Right Bracket ] */
-  .upload-zone::after {
-    right: 15px;
-    border-left: none;
-    border-radius: 0 10px 10px 0;
-  }
+/* Bracket Logic */
+.bracket-frame::before,
+.bracket-frame::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  border: 2px solid var(--border);
+  transition: 0.2s;
+}
 
-  /* Make the brackets turn green when you hover the box */
-  .upload-zone:hover::before,
-  .upload-zone:hover::after {
-    border-color: var(--accent);
+/* Left [ */
+.bracket-frame::before {
+  left: 0;
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Right ] */
+.bracket-frame::after {
+  right: 0;
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+}
+
+/* Hover highlights */
+.upload-zone:hover .bracket-frame::before,
+.upload-zone:hover .bracket-frame::after {
+  border-color: var(--accent);
+}
   }
   
   .upload-zone .huge {
@@ -375,11 +385,12 @@
 
   <div id="uploadScreen">
     <label class="upload-zone" id="dropZone" for="fileInput">
-      <div class="huge">Drop customer event CSV <em>here</em></div>
-      <p>or click to browse</p>
-      <div class="hint">Expects one customer's data · columns: event, device_id, value, time · parsed locally, nothing uploaded</div>
-      <input type="file" id="fileInput" accept=".csv" />
-    </label>
+  <span class="bracket-frame"> <div class="huge">Drop customer event CSV <em>here</em></div>
+    <p>or click to browse</p>
+  </span>
+  <div class="hint">Expects one customer's data · columns: event, device_id, value, time · parsed locally, nothing uploaded</div>
+  <input type="file" id="fileInput" accept=".csv" />
+</label>
   </div>
 
   <div id="dashboard" class="hidden">
