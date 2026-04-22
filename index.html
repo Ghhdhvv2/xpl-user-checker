@@ -58,59 +58,19 @@
   header.top .meta .ok { color: var(--ok); }
 
   /* Upload */
- /* Center the contents and make sure the span behaves */
-.upload-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px dashed var(--border);
-  border-radius: 10px;
-  padding: 48px 32px;
-  cursor: pointer;
-  background: var(--bg-2);
-  transition: 0.2s;
-}
-
-.bracket-frame {
-  position: relative;
-  padding: 10px 40px; /* Space on sides for brackets */
-  display: inline-block;
-}
-
-/* Bracket Logic */
-.bracket-frame::before,
-.bracket-frame::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 20px;
-  border: 2px solid var(--border);
-  transition: 0.2s;
-}
-
-/* Left [ */
-.bracket-frame::before {
-  left: 0;
-  border-right: none;
-  border-radius: 12px 0 0 12px;
-}
-
-/* Right ] */
-.bracket-frame::after {
-  right: 0;
-  border-left: none;
-  border-radius: 0 12px 12px 0;
-}
-
-/* Hover highlights */
-.upload-zone:hover .bracket-frame::before,
-.upload-zone:hover .bracket-frame::after {
-  border-color: var(--accent);
-}
+  #uploadScreen { position: relative; }
+  .upload-zone {
+    position: relative;
+    display: block;
+    border: 1.5px dashed var(--border); border-radius: 10px;
+    padding: 48px 32px; text-align: center; transition: 0.2s;
+    cursor: pointer; background: var(--bg-2);
   }
-  
+  .upload-zone::before, .upload-zone::after { content: none !important; }
+  #uploadScreen::before, #uploadScreen::after { content: none !important; }
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: var(--accent); background: #15181e;
+  }
   .upload-zone .huge {
     font-family: 'Instrument Serif', serif; font-size: 36px;
     margin-bottom: 8px;
@@ -121,7 +81,16 @@
     font-family: 'JetBrains Mono', monospace; font-size: 11px;
     color: var(--text-faint); margin-top: 12px;
   }
-  .upload-zone input { display: none; }
+  .upload-zone input[type="file"] {
+    position: absolute !important;
+    width: 1px !important; height: 1px !important;
+    padding: 0 !important; margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+  }
 
   .btn {
     display: inline-block; padding: 8px 16px;
@@ -167,7 +136,7 @@
 
   /* KPI strip */
   .kpi-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 1px; background: var(--border-soft);
     border: 1px solid var(--border-soft); border-radius: 10px;
     overflow: hidden; margin-bottom: 24px;
@@ -292,7 +261,6 @@
   }
   .timeline-item.ev-reward::before { background: var(--info); }
   .timeline-item.ev-progress::before { background: var(--purple); }
-  .timeline-item.ev-levelup::before { background: var(--warn); }
   .timeline-item.ev-redeem::before { background: var(--ok); }
   .timeline-item .ts {
     font-family: 'JetBrains Mono', monospace; font-size: 10px;
@@ -361,7 +329,7 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--bg-3); }
 
-  .hidden { display: none !important; }
+  .hidden, .hidden * { display: none !important; }
   .warn-banner {
     background: #2a1f10; border: 1px solid #5a441c;
     color: var(--warn); padding: 10px 14px; border-radius: 6px;
@@ -385,12 +353,11 @@
 
   <div id="uploadScreen">
     <label class="upload-zone" id="dropZone" for="fileInput">
-  <span class="bracket-frame"> <div class="huge">Drop customer event CSV <em>here</em></div>
-    <p>or click to browse</p>
-  </span>
-  <div class="hint">Expects one customer's data · columns: event, device_id, value, time · parsed locally, nothing uploaded</div>
-  <input type="file" id="fileInput" accept=".csv" />
-</label>
+      <div class="huge">Drop customer event CSV <em>here</em></div>
+      <p>or click to browse</p>
+      <div class="hint">Expects one customer's data · columns: event, device_id, value, time · parsed locally, nothing uploaded</div>
+      <input type="file" id="fileInput" accept=".csv" />
+    </label>
   </div>
 
   <div id="dashboard" class="hidden">
@@ -456,7 +423,7 @@ const XPL_EVENTS = [
   'CHALLENGE_PROGRESS_UPDATED','CHALLENGE_COMPLETED','DAILY_CLAIMED',
   'REWARD_DISTRIBUTED','QUEST_ACCEPTED','QUEST_STARTED','QUEST_COMPLETED',
   'QUEST_CLAIMED','REDEEM_TRANSACTION_COMPLETED','LEADERBOARD_ROTATED',
-  'GAME_RULE_TRIGGERED','DIRECT_REWARD_DISTRIBUTED','LEVEL_UP'
+  'GAME_RULE_TRIGGERED','DIRECT_REWARD_DISTRIBUTED'
 ];
 const XPL_SET = new Set(XPL_EVENTS);
 
@@ -604,7 +571,6 @@ function renderKPIs() {
   let tokensDist = 0, tokenRewardCount = 0;
   let tokensRedeemed = 0, redemptions = 0;
   let questsClaimed = 0, challengesDone = 0;
-  let maxLevel = null, levelUps = 0;
   for (const r of ALL_ROWS) {
     if (r.event === 'REWARD_DISTRIBUTED' && r.value && r.value.reward) {
       if (r.value.reward.type === 'TOKEN') {
@@ -624,17 +590,12 @@ function renderKPIs() {
     }
     if (r.event === 'QUEST_CLAIMED') questsClaimed++;
     if (r.event === 'CHALLENGE_COMPLETED') challengesDone++;
-    if (r.event === 'LEVEL_UP' && r.value) {
-      levelUps++;
-      maxLevel = Math.max(maxLevel || 0, r.value.toLevel || 0);
-    }
   }
   const kpis = [
     { label: 'Tokens earned', value: fmtNum(tokensDist), sub: `${tokenRewardCount} reward${tokenRewardCount === 1 ? '' : 's'}` },
     { label: 'Tokens spent', value: fmtNum(tokensRedeemed), sub: `${redemptions} redemption${redemptions === 1 ? '' : 's'}` },
     { label: 'Net balance Δ', value: fmtNum(tokensDist - tokensRedeemed), sub: 'earned − spent' },
     { label: 'Quests claimed', value: fmtNum(questsClaimed), sub: `${challengesDone} challenges done` },
-    { label: 'Level', value: maxLevel != null ? String(maxLevel) : '—', sub: `${levelUps} level-up${levelUps === 1 ? '' : 's'}` },
   ];
   document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
     `<div class="kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub">${k.sub}</div></div>`
@@ -726,7 +687,7 @@ function renderQuestTiles() {
         <div class="step ${q.claimed ? 'active' : ''}" title="Claimed"></div>
       </div>
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim);">
-        ${q.target ? `Challenge: ${q.progress}/${q.target} (${chPct}%)` : ''}
+        ${q.target ? `Progress: ${q.progress}/${q.target} (${chPct}%)` : ''}
         ${q.latestOverall ? `<br>Overall: ${overallPct}%` : ''}
       </div>
     </div>`;
@@ -861,8 +822,6 @@ function summarizeEvent(r) {
       if (body) return `${body.activity_type_name || '?'} · ${body.game_name || '?'} · ${body.amount_customer || 0} ${body.customer_currency_code || ''}`;
       return '—';
     }
-    case 'LEVEL_UP':
-      return `Level ${v.fromLevel}→${v.toLevel}${v.tokensSpent ? ` · spent ${v.tokensSpent}` : ''}`;
     default: return '';
   }
 }
@@ -872,14 +831,12 @@ function eventChipClass(ev) {
   if (ev === 'QUEST_COMPLETED' || ev === 'CHALLENGE_COMPLETED') return 'green';
   if (ev.includes('REWARD') || ev === 'DAILY_CLAIMED') return 'blue';
   if (ev.includes('PROGRESS') || ev.includes('STARTED') || ev.includes('ACCEPTED')) return 'purple';
-  if (ev === 'LEVEL_UP') return 'yellow';
   if (ev === 'LEADERBOARD_ROTATED') return 'blue';
   return 'gray';
 }
 function eventDotClass(ev) {
   if (ev.includes('REWARD') || ev === 'DAILY_CLAIMED') return 'ev-reward';
   if (ev.includes('PROGRESS')) return 'ev-progress';
-  if (ev === 'LEVEL_UP') return 'ev-levelup';
   if (ev === 'REDEEM_TRANSACTION_COMPLETED') return 'ev-redeem';
   return '';
 }
